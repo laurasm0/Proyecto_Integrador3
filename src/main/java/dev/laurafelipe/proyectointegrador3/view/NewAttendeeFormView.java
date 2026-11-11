@@ -1,3 +1,4 @@
+
 package dev.laurafelipe.proyectointegrador3.view;
 
 import dev.laurafelipe.proyectointegrador3.entity.Attendee;
@@ -7,9 +8,11 @@ import javafx.beans.property.StringProperty;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.util.Builder;
@@ -60,7 +63,21 @@ public class NewAttendeeFormView implements Builder<Region> {
 
     private Node createDocumentNumberField() {
         TextField documentNumberField = new TextField();
+
+        documentNumberField.setTextFormatter(
+                new TextFormatter<String>(change -> {
+                    String text = change.getControlNewText();
+
+                    if (text.matches("[0-9]{0,9}")) {
+                        return change;
+                    }
+
+                    return null;
+                })
+        );
+
         documentNumberField.textProperty().bindBidirectional(documentNumber);
+
         return documentNumberField;
     }
 
@@ -88,12 +105,28 @@ public class NewAttendeeFormView implements Builder<Region> {
 
             try {
                 service.createAttendee(attendee);
+
                 service.findAllAttendees();
+
                 closeWindowFrom(event);
 
-            } catch (Exception e) {
-                System.err.println(e);
+            } catch (IllegalArgumentException e) {
                 errorMessage.setValue(e.getMessage());
+
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Datos no validos");
+                alert.setHeaderText("No se puede registrar el asistente");
+                alert.setContentText(e.getMessage());
+                alert.showAndWait();
+
+            } catch (Exception e) {
+                errorMessage.setValue("Error al registrar el asistente");
+
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Error");
+                alert.setHeaderText("No se pudo registrar el asistente");
+                alert.setContentText(e.getMessage());
+                alert.showAndWait();
             }
         });
 

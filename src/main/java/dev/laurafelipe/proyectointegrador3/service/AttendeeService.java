@@ -26,16 +26,25 @@ public class AttendeeService {
 
     public void createAttendee(Attendee attendee) {
         if (attendee.name == null || attendee.name.trim().isBlank()) {
-            throw new IllegalArgumentException("Nombre no valido");
+            throw new IllegalArgumentException("El nombre es obligatorio");
         }
 
-        if (attendee.documentNumber == null || attendee.documentNumber.trim().isBlank()) {
-            throw new IllegalArgumentException("Numero de documento no valido");
+        if (attendee.documentNumber == null ||
+                !attendee.documentNumber.matches("[0-9]{9}")) {
+            throw new IllegalArgumentException(
+                    "El documento debe tener exactamente 9 digitos numericos"
+            );
         }
 
-        if (attendee.email == null || attendee.email.trim().isBlank()) {
-            throw new IllegalArgumentException("Correo electronico no valido");
+        if (attendee.email == null ||
+                !attendee.email.trim().matches(
+                        "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+            throw new IllegalArgumentException(
+                    "Correo no valido. Ejemplo: usuario@gmail.com"
+            );
         }
+
+        attendee.email = attendee.email.trim();
 
         repository.save(attendee);
     }
@@ -50,16 +59,25 @@ public class AttendeeService {
 
     public void updateAttendee(Attendee attendee) {
         if (attendee.name == null || attendee.name.trim().isBlank()) {
-            throw new IllegalArgumentException("Nombre no valido");
+            throw new IllegalArgumentException("El nombre es obligatorio");
         }
 
-        if (attendee.documentNumber == null || attendee.documentNumber.trim().isBlank()) {
-            throw new IllegalArgumentException("Numero de documento no valido");
+        if (attendee.documentNumber == null ||
+                !attendee.documentNumber.matches("[0-9]{9}")) {
+            throw new IllegalArgumentException(
+                    "El documento debe tener exactamente 9 digitos numericos"
+            );
         }
 
-        if (attendee.email == null || attendee.email.trim().isBlank()) {
-            throw new IllegalArgumentException("Correo electronico no valido");
+        if (attendee.email == null ||
+                !attendee.email.trim().matches(
+                        "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+            throw new IllegalArgumentException(
+                    "Correo no valido. Ejemplo: usuario@gmail.com"
+            );
         }
+
+        attendee.email = attendee.email.trim();
 
         repository.update(attendee);
     }
