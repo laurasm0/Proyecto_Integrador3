@@ -5,11 +5,20 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
 
 import dev.laurafelipe.proyectointegrador3.controller.AttendeeController;
+import dev.laurafelipe.proyectointegrador3.controller.EventController;
+import dev.laurafelipe.proyectointegrador3.controller.RegistrationController;
+import dev.laurafelipe.proyectointegrador3.controller.VenueController;
 import dev.laurafelipe.proyectointegrador3.repository.AttendeeRepository;
+import dev.laurafelipe.proyectointegrador3.repository.EventRepository;
+import dev.laurafelipe.proyectointegrador3.repository.RegistrationRepository;
+import dev.laurafelipe.proyectointegrador3.repository.VenueRepository;
 
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
+import javafx.scene.layout.Region;
 import javafx.stage.Stage;
 
 public class FXApplication extends Application {
@@ -29,12 +38,43 @@ public class FXApplication extends Application {
 
             MongoDatabase database = mongoClient.getDatabase("integrativeprojectdb");
 
-            AttendeeRepository repository = new AttendeeRepository(database);
+            AttendeeRepository attendeeRepository = new AttendeeRepository(database);
+            VenueRepository venueRepository = new VenueRepository(database);
+            EventRepository eventRepository = new EventRepository(database);
+            RegistrationRepository registrationRepository = new RegistrationRepository(database);
 
-            AttendeeController controller = new AttendeeController(repository);
+            // AttendeeController queda exactamente como estaba
+            AttendeeController attendeeController = new AttendeeController(attendeeRepository);
 
-            Scene scene = new Scene(controller.getView());
+            VenueController venueController = new VenueController(
+                    venueRepository,
+                    eventRepository
+            );
 
+            EventController eventController = new EventController(
+                    eventRepository,
+                    venueRepository,
+                    registrationRepository
+            );
+
+            RegistrationController registrationController = new RegistrationController(
+                    registrationRepository,
+                    eventRepository,
+                    attendeeRepository
+            );
+
+            TabPane tabPane = new TabPane(
+                    createTab("Eventos", eventController.getView(), eventController::refresh),
+                    createTab("Lugares", venueController.getView(), venueController::refresh),
+                    createTab("Asistentes", attendeeController.getView(), () -> { }),
+                    createTab("Inscripciones", registrationController.getView(), registrationController::refresh)
+            );
+
+            tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+
+            Scene scene = new Scene(tabPane, 1000, 600);
+
+            primaryStage.setTitle("Eventos USTA");
             primaryStage.setScene(scene);
             primaryStage.show();
 
@@ -48,6 +88,19 @@ public class FXApplication extends Application {
 
             throw e;
         }
+    }
+
+    // Cada vez que se selecciona una pestana se recargan sus datos
+    private Tab createTab(String title, Region content, Runnable onSelected) {
+        Tab tab = new Tab(title, content);
+
+        tab.setOnSelectionChanged(event -> {
+            if (tab.isSelected()) {
+                onSelected.run();
+            }
+        });
+
+        return tab;
     }
 
     @Override
