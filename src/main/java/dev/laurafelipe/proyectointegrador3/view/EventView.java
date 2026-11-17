@@ -1,8 +1,10 @@
+
 package dev.laurafelipe.proyectointegrador3.view;
 
 import dev.laurafelipe.proyectointegrador3.entity.Event;
 import dev.laurafelipe.proyectointegrador3.model.EventModel;
 import dev.laurafelipe.proyectointegrador3.service.EventService;
+
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
@@ -18,10 +20,13 @@ import javafx.stage.Stage;
 import javafx.util.Builder;
 
 public class EventView implements Builder<Region> {
-    private static final String ALL_CATEGORIES = "Todas las categorias";
+
+    private static final String ALL_CATEGORIES =
+            "Todas las categorias";
 
     private final EventModel model;
     private final EventService service;
+
     private FilteredList<Event> filteredEvents;
 
     private final TextField searchField = new TextField();
@@ -34,6 +39,7 @@ public class EventView implements Builder<Region> {
 
     @Override
     public Region build() {
+
         Node newEventButton = createNewEventButton();
         Node table = createEventsTable();
         Node searchNode = createSearchField();
@@ -51,16 +57,23 @@ public class EventView implements Builder<Region> {
                 categoryNode
         );
 
-        navigationBarHBox.setPadding(new Insets(8));
-        navigationBarHBox.setSpacing(8);
+        navigationBarHBox.setPadding(new Insets(12));
+        navigationBarHBox.setSpacing(10);
+        navigationBarHBox.getStyleClass().add("toolbar");
 
-        return new VBox(
+        VBox content = new VBox(
                 navigationBarHBox,
                 table
         );
+
+        content.setSpacing(12);
+        content.setPadding(new Insets(15));
+
+        return content;
     }
 
     private Node createSearchField() {
+
         searchField.setPromptText("Buscar por nombre...");
 
         searchField.textProperty().addListener(
@@ -71,6 +84,7 @@ public class EventView implements Builder<Region> {
     }
 
     private Node createCategoryFilter() {
+
         categoryFilter.getItems().add(ALL_CATEGORIES);
         categoryFilter.getItems().addAll(Event.CATEGORIES);
         categoryFilter.setValue(ALL_CATEGORIES);
@@ -82,14 +96,16 @@ public class EventView implements Builder<Region> {
         return categoryFilter;
     }
 
-    // Combina el texto de busqueda con la categoria seleccionada
     private void applyFilters() {
+
         String search = searchField.getText() == null
                 ? ""
                 : searchField.getText().trim().toLowerCase();
+
         String category = categoryFilter.getValue();
 
         filteredEvents.setPredicate(event -> {
+
             boolean matchesSearch = search.isEmpty()
                     || event.name.toLowerCase().contains(search);
 
@@ -102,6 +118,7 @@ public class EventView implements Builder<Region> {
     }
 
     private Node createUpdateEventButton() {
+
         Button button = new Button("Actualizar");
 
         button.disableProperty().bind(
@@ -109,12 +126,14 @@ public class EventView implements Builder<Region> {
         );
 
         button.setOnAction(event -> {
+
             Event selectedEvent = model.selectedEvent.get();
 
-            // Refresca la lista de lugares por si se creo o cambio alguno
             service.findAllEvents();
 
-            Stage updateEventModal = createUpdateEventModal(selectedEvent);
+            Stage updateEventModal =
+                    createUpdateEventModal(selectedEvent);
+
             updateEventModal.showAndWait();
         });
 
@@ -122,6 +141,7 @@ public class EventView implements Builder<Region> {
     }
 
     private Stage createUpdateEventModal(Event eventToUpdate) {
+
         Stage modal = new Stage();
 
         modal.initModality(Modality.APPLICATION_MODAL);
@@ -132,10 +152,13 @@ public class EventView implements Builder<Region> {
 
         modal.setScene(new Scene(updateEventForm.build()));
 
+        StylesView.applyModal(modal.getScene());
+
         return modal;
     }
 
     private Node createDeleteEventButton() {
+
         Button button = new Button("Eliminar");
 
         button.disableProperty().bind(
@@ -143,21 +166,36 @@ public class EventView implements Builder<Region> {
         );
 
         button.setOnAction(event -> {
+
             try {
-                String eventId = model.selectedEvent.get().eventId;
+
+                String eventId =
+                        model.selectedEvent.get().eventId;
+
                 service.removeEventById(eventId);
                 service.findAllEvents();
 
-                Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+                Alert successAlert =
+                        new Alert(Alert.AlertType.INFORMATION);
+
                 successAlert.setTitle("Evento eliminado");
-                successAlert.setHeaderText("Evento eliminado exitosamente");
+                successAlert.setHeaderText(
+                        "Evento eliminado exitosamente"
+                );
+
                 successAlert.showAndWait();
 
             } catch (Exception e) {
-                Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+
+                Alert errorAlert =
+                        new Alert(Alert.AlertType.ERROR);
+
                 errorAlert.setTitle("Error");
-                errorAlert.setHeaderText("No se pudo eliminar el evento");
+                errorAlert.setHeaderText(
+                        "No se pudo eliminar el evento"
+                );
                 errorAlert.setContentText(e.getMessage());
+
                 errorAlert.showAndWait();
             }
         });
@@ -166,13 +204,16 @@ public class EventView implements Builder<Region> {
     }
 
     private Node createNewEventButton() {
+
         Button button = new Button("Registrar evento");
+        button.getStyleClass().add("primary-button");
 
         button.setOnAction(event -> {
-            // Refresca la lista de lugares por si se creo alguno nuevo
+
             service.findAllEvents();
 
             Stage newEventModal = createNewEventModal();
+
             newEventModal.showAndWait();
         });
 
@@ -180,6 +221,7 @@ public class EventView implements Builder<Region> {
     }
 
     private Stage createNewEventModal() {
+
         Stage modal = new Stage();
 
         modal.initModality(Modality.APPLICATION_MODAL);
@@ -190,61 +232,89 @@ public class EventView implements Builder<Region> {
 
         modal.setScene(new Scene(newEventFormView.build()));
 
+        StylesView.applyModal(modal.getScene());
+
         return modal;
     }
 
     private Node createEventsTable() {
+
         TableView<Event> tableView = new TableView<>();
 
         model.selectedEvent.bind(
                 tableView.getSelectionModel().selectedItemProperty()
         );
 
-        TableColumn<Event, String> nameColumn = new TableColumn<>("Nombre");
+        TableColumn<Event, String> nameColumn =
+                new TableColumn<>("Nombre");
+
         nameColumn.setCellValueFactory(
                 p -> new ReadOnlyStringWrapper(p.getValue().name)
         );
+
         tableView.getColumns().add(nameColumn);
 
-        TableColumn<Event, String> categoryColumn = new TableColumn<>("Categoria");
+        TableColumn<Event, String> categoryColumn =
+                new TableColumn<>("Categoria");
+
         categoryColumn.setCellValueFactory(
                 p -> new ReadOnlyStringWrapper(p.getValue().category)
         );
+
         tableView.getColumns().add(categoryColumn);
 
-        TableColumn<Event, String> dateColumn = new TableColumn<>("Fecha");
+        TableColumn<Event, String> dateColumn =
+                new TableColumn<>("Fecha");
+
         dateColumn.setCellValueFactory(
                 p -> new ReadOnlyStringWrapper(p.getValue().date)
         );
+
         tableView.getColumns().add(dateColumn);
 
-        TableColumn<Event, String> scheduleColumn = new TableColumn<>("Horario");
+        TableColumn<Event, String> scheduleColumn =
+                new TableColumn<>("Horario");
+
         scheduleColumn.setCellValueFactory(
                 p -> new ReadOnlyStringWrapper(
-                        p.getValue().startTime + " - " + p.getValue().endTime
+                        p.getValue().startTime + " - "
+                                + p.getValue().endTime
                 )
         );
+
         tableView.getColumns().add(scheduleColumn);
 
-        TableColumn<Event, String> venueColumn = new TableColumn<>("Lugar");
+        TableColumn<Event, String> venueColumn =
+                new TableColumn<>("Lugar");
+
         venueColumn.setCellValueFactory(
-                p -> new ReadOnlyStringWrapper(service.getVenueName(p.getValue().venueId))
+                p -> new ReadOnlyStringWrapper(
+                        service.getVenueName(p.getValue().venueId)
+                )
         );
+
         tableView.getColumns().add(venueColumn);
 
-        TableColumn<Event, String> capacityColumn = new TableColumn<>("Capacidad");
+        TableColumn<Event, String> capacityColumn =
+                new TableColumn<>("Capacidad");
+
         capacityColumn.setCellValueFactory(
-                p -> new ReadOnlyStringWrapper(String.valueOf(p.getValue().capacity))
+                p -> new ReadOnlyStringWrapper(
+                        String.valueOf(p.getValue().capacity)
+                )
         );
+
         tableView.getColumns().add(capacityColumn);
 
-        filteredEvents = new FilteredList<>(model.events, event -> true);
+        filteredEvents =
+                new FilteredList<>(model.events, event -> true);
+
         tableView.setItems(filteredEvents);
+
         tableView.setColumnResizePolicy(
                 TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS
         );
 
         return tableView;
     }
-
 }

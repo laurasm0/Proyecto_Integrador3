@@ -1,3 +1,4 @@
+
 package dev.laurafelipe.proyectointegrador3.service;
 
 import dev.laurafelipe.proyectointegrador3.entity.Event;
@@ -6,6 +7,7 @@ import dev.laurafelipe.proyectointegrador3.model.EventModel;
 import dev.laurafelipe.proyectointegrador3.repository.EventRepository;
 import dev.laurafelipe.proyectointegrador3.repository.RegistrationRepository;
 import dev.laurafelipe.proyectointegrador3.repository.VenueRepository;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
@@ -17,6 +19,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 public class EventService {
+
     private static final DateTimeFormatter TIME_FORMAT =
             DateTimeFormatter.ofPattern("HH:mm");
 
@@ -38,14 +41,19 @@ public class EventService {
     }
 
     public void findAllEvents() {
-        ObservableList<Venue> venues = FXCollections.observableArrayList(
-                venueRepository.findAll()
-        );
+
+        ObservableList<Venue> venues =
+                FXCollections.observableArrayList(
+                        venueRepository.findAll()
+                );
+
         model.venues.set(venues);
 
-        ObservableList<Event> events = FXCollections.observableArrayList(
-                repository.findAll()
-        );
+        ObservableList<Event> events =
+                FXCollections.observableArrayList(
+                        repository.findAll()
+                );
+
         model.events.set(events);
     }
 
@@ -54,7 +62,9 @@ public class EventService {
     }
 
     public String getVenueName(String venueId) {
+
         for (Venue venue : model.venues) {
+
             if (venue.venueId.equals(venueId)) {
                 return venue.name;
             }
@@ -64,6 +74,7 @@ public class EventService {
     }
 
     public void createEvent(Event event) {
+
         validateEvent(event);
 
         event.name = event.name.trim();
@@ -73,8 +84,11 @@ public class EventService {
     }
 
     public void removeEventById(String eventId) {
+
         if (repository.findById(eventId) == null) {
-            throw new NoSuchElementException("Evento no encontrado");
+            throw new NoSuchElementException(
+                    "Evento no encontrado"
+            );
         }
 
         if (registrationRepository.existsByEventId(eventId)) {
@@ -87,10 +101,11 @@ public class EventService {
     }
 
     public void updateEvent(Event event) {
+
         validateEvent(event);
 
-        // No se puede bajar la capacidad por debajo de los inscritos activos
-        long activeCount = registrationRepository.countActiveByEvent(event.eventId);
+        long activeCount =
+                registrationRepository.countActiveByEvent(event.eventId);
 
         if (event.capacity < activeCount) {
             throw new IllegalArgumentException(
@@ -106,26 +121,53 @@ public class EventService {
     }
 
     private void validateEvent(Event event) {
-        if (event.name == null || event.name.trim().isBlank()) {
-            throw new IllegalArgumentException("El nombre es obligatorio");
+
+        if (event.name == null ||
+                event.name.trim().isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "El nombre es obligatorio"
+            );
         }
 
-        if (event.description == null || event.description.trim().isBlank()) {
-            throw new IllegalArgumentException("La descripcion es obligatoria");
+        if (event.description == null ||
+                event.description.trim().isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "La descripcion es obligatoria"
+            );
         }
 
-        if (event.category == null || event.category.isBlank()) {
-            throw new IllegalArgumentException("Seleccione una categoria");
+        if (event.category == null ||
+                event.category.isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "Seleccione una categoria"
+            );
         }
 
-        if (event.date == null || event.date.isBlank()) {
-            throw new IllegalArgumentException("Seleccione una fecha");
+        if (event.date == null ||
+                event.date.isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "Seleccione una fecha"
+            );
         }
+
+        LocalDate eventDate;
 
         try {
-            LocalDate.parse(event.date);
+            eventDate = LocalDate.parse(event.date);
         } catch (DateTimeParseException e) {
-            throw new IllegalArgumentException("Fecha no valida. Formato: aaaa-mm-dd");
+            throw new IllegalArgumentException(
+                    "Fecha no valida. Formato: aaaa-mm-dd"
+            );
+        }
+
+        if (eventDate.isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException(
+                    "No se pueden registrar eventos en fechas anteriores a hoy"
+            );
         }
 
         LocalTime start = parseTime(event.startTime, "inicio");
@@ -138,27 +180,35 @@ public class EventService {
         }
 
         if (event.capacity <= 0) {
-            throw new IllegalArgumentException("La capacidad debe ser mayor que cero");
+            throw new IllegalArgumentException(
+                    "La capacidad debe ser mayor que cero"
+            );
         }
 
-        if (event.venueId == null || event.venueId.isBlank()) {
-            throw new IllegalArgumentException("Seleccione un lugar");
+        if (event.venueId == null ||
+                event.venueId.isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "Seleccione un lugar"
+            );
         }
 
         Venue venue = venueRepository.findById(event.venueId);
 
         if (venue == null) {
-            throw new NoSuchElementException("Lugar no encontrado");
+            throw new NoSuchElementException(
+                    "Lugar no encontrado"
+            );
         }
 
         if (event.capacity > venue.capacity) {
             throw new IllegalArgumentException(
-                    "La capacidad (" + event.capacity + ") supera la del lugar ("
+                    "La capacidad (" + event.capacity
+                            + ") supera la del lugar ("
                             + venue.capacity + ")"
             );
         }
 
-        // Regla de negocio: no dos eventos en el mismo lugar y horario
         if (repository.existsOverlap(
                 event.venueId,
                 event.date,
@@ -172,16 +222,28 @@ public class EventService {
         }
     }
 
-    private LocalTime parseTime(String value, String label) {
+    private LocalTime parseTime(
+            String value,
+            String label
+    ) {
+
         if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException("La hora de " + label + " es obligatoria");
+            throw new IllegalArgumentException(
+                    "La hora de " + label + " es obligatoria"
+            );
         }
 
         try {
-            return LocalTime.parse(value.trim(), TIME_FORMAT);
+            return LocalTime.parse(
+                    value.trim(),
+                    TIME_FORMAT
+            );
+
         } catch (DateTimeParseException e) {
+
             throw new IllegalArgumentException(
-                    "Hora de " + label + " no valida. Formato: HH:mm (ej. 08:00)"
+                    "Hora de " + label
+                            + " no valida. Formato: HH:mm (ej. 08:00)"
             );
         }
     }

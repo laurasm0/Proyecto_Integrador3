@@ -1,8 +1,10 @@
+
 package dev.laurafelipe.proyectointegrador3.view;
 
 import dev.laurafelipe.proyectointegrador3.entity.Venue;
 import dev.laurafelipe.proyectointegrador3.model.VenueModel;
 import dev.laurafelipe.proyectointegrador3.service.VenueService;
+
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
@@ -18,8 +20,10 @@ import javafx.stage.Stage;
 import javafx.util.Builder;
 
 public class VenueView implements Builder<Region> {
+
     private final VenueModel model;
     private final VenueService service;
+
     private FilteredList<Venue> filteredVenues;
 
     public VenueView(VenueModel model, VenueService service) {
@@ -29,6 +33,7 @@ public class VenueView implements Builder<Region> {
 
     @Override
     public Region build() {
+
         Node newVenueButton = createNewVenueButton();
         Node table = createVenuesTable();
         Node searchField = createSearchField();
@@ -44,36 +49,57 @@ public class VenueView implements Builder<Region> {
                 searchField
         );
 
-        navigationBarHBox.setPadding(new Insets(8));
-        navigationBarHBox.setSpacing(8);
+        navigationBarHBox.setPadding(new Insets(12));
+        navigationBarHBox.setSpacing(10);
+        navigationBarHBox.getStyleClass().add("toolbar");
 
-        return new VBox(
+        VBox content = new VBox(
                 navigationBarHBox,
                 table
         );
+
+        content.setSpacing(12);
+        content.setPadding(new Insets(15));
+
+        return content;
     }
 
     private Node createSearchField() {
+
         TextField searchField = new TextField();
+
         searchField.setPromptText("Buscar por nombre o tipo...");
 
-        searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-            filteredVenues.setPredicate(venue -> {
-                if (newValue == null || newValue.isBlank()) {
-                    return true;
+        searchField.textProperty().addListener(
+                (observable, oldValue, newValue) -> {
+
+                    filteredVenues.setPredicate(venue -> {
+
+                        if (newValue == null || newValue.isBlank()) {
+                            return true;
+                        }
+
+                        String search = newValue.toLowerCase();
+
+                        String name = venue.name == null
+                                ? ""
+                                : venue.name.toLowerCase();
+
+                        String type = venue.type == null
+                                ? ""
+                                : venue.type.toLowerCase();
+
+                        return name.contains(search)
+                                || type.contains(search);
+                    });
                 }
-
-                String search = newValue.toLowerCase();
-
-                return venue.name.toLowerCase().contains(search)
-                        || venue.type.toLowerCase().contains(search);
-            });
-        });
+        );
 
         return searchField;
     }
 
     private Node createUpdateVenueButton() {
+
         Button button = new Button("Actualizar");
 
         button.disableProperty().bind(
@@ -81,8 +107,12 @@ public class VenueView implements Builder<Region> {
         );
 
         button.setOnAction(event -> {
+
             Venue selectedVenue = model.selectedVenue.get();
-            Stage updateVenueModal = createUpdateVenueModal(selectedVenue);
+
+            Stage updateVenueModal =
+                    createUpdateVenueModal(selectedVenue);
+
             updateVenueModal.showAndWait();
         });
 
@@ -90,6 +120,7 @@ public class VenueView implements Builder<Region> {
     }
 
     private Stage createUpdateVenueModal(Venue venueToUpdate) {
+
         Stage modal = new Stage();
 
         modal.initModality(Modality.APPLICATION_MODAL);
@@ -100,10 +131,13 @@ public class VenueView implements Builder<Region> {
 
         modal.setScene(new Scene(updateVenueForm.build()));
 
+        StylesView.applyModal(modal.getScene());
+
         return modal;
     }
 
     private Node createDeleteVenueButton() {
+
         Button button = new Button("Eliminar");
 
         button.disableProperty().bind(
@@ -111,21 +145,36 @@ public class VenueView implements Builder<Region> {
         );
 
         button.setOnAction(event -> {
+
             try {
-                String venueId = model.selectedVenue.get().venueId;
+
+                String venueId =
+                        model.selectedVenue.get().venueId;
+
                 service.removeVenueById(venueId);
                 service.findAllVenues();
 
-                Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+                Alert successAlert =
+                        new Alert(Alert.AlertType.INFORMATION);
+
                 successAlert.setTitle("Lugar eliminado");
-                successAlert.setHeaderText("Lugar eliminado exitosamente");
+                successAlert.setHeaderText(
+                        "Lugar eliminado exitosamente"
+                );
+
                 successAlert.showAndWait();
 
             } catch (Exception e) {
-                Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+
+                Alert errorAlert =
+                        new Alert(Alert.AlertType.ERROR);
+
                 errorAlert.setTitle("Error");
-                errorAlert.setHeaderText("No se pudo eliminar el lugar");
+                errorAlert.setHeaderText(
+                        "No se pudo eliminar el lugar"
+                );
                 errorAlert.setContentText(e.getMessage());
+
                 errorAlert.showAndWait();
             }
         });
@@ -134,10 +183,14 @@ public class VenueView implements Builder<Region> {
     }
 
     private Node createNewVenueButton() {
+
         Button button = new Button("Registrar lugar");
+        button.getStyleClass().add("primary-button");
 
         button.setOnAction(event -> {
+
             Stage newVenueModal = createNewVenueModal();
+
             newVenueModal.showAndWait();
         });
 
@@ -145,6 +198,7 @@ public class VenueView implements Builder<Region> {
     }
 
     private Stage createNewVenueModal() {
+
         Stage modal = new Stage();
 
         modal.initModality(Modality.APPLICATION_MODAL);
@@ -155,41 +209,57 @@ public class VenueView implements Builder<Region> {
 
         modal.setScene(new Scene(newVenueFormView.build()));
 
+        StylesView.applyModal(modal.getScene());
+
         return modal;
     }
 
     private Node createVenuesTable() {
+
         TableView<Venue> tableView = new TableView<>();
 
         model.selectedVenue.bind(
                 tableView.getSelectionModel().selectedItemProperty()
         );
 
-        TableColumn<Venue, String> nameColumn = new TableColumn<>("Nombre");
+        TableColumn<Venue, String> nameColumn =
+                new TableColumn<>("Nombre");
+
         nameColumn.setCellValueFactory(
                 p -> new ReadOnlyStringWrapper(p.getValue().name)
         );
+
         tableView.getColumns().add(nameColumn);
 
-        TableColumn<Venue, String> typeColumn = new TableColumn<>("Tipo");
+        TableColumn<Venue, String> typeColumn =
+                new TableColumn<>("Tipo");
+
         typeColumn.setCellValueFactory(
                 p -> new ReadOnlyStringWrapper(p.getValue().type)
         );
+
         tableView.getColumns().add(typeColumn);
 
-        TableColumn<Venue, String> capacityColumn = new TableColumn<>("Capacidad");
+        TableColumn<Venue, String> capacityColumn =
+                new TableColumn<>("Capacidad");
+
         capacityColumn.setCellValueFactory(
-                p -> new ReadOnlyStringWrapper(String.valueOf(p.getValue().capacity))
+                p -> new ReadOnlyStringWrapper(
+                        String.valueOf(p.getValue().capacity)
+                )
         );
+
         tableView.getColumns().add(capacityColumn);
 
-        filteredVenues = new FilteredList<>(model.venues, venue -> true);
+        filteredVenues =
+                new FilteredList<>(model.venues, venue -> true);
+
         tableView.setItems(filteredVenues);
+
         tableView.setColumnResizePolicy(
                 TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS
         );
 
         return tableView;
     }
-
 }

@@ -1,8 +1,10 @@
+
 package dev.laurafelipe.proyectointegrador3.view;
 
 import dev.laurafelipe.proyectointegrador3.entity.Attendee;
 import dev.laurafelipe.proyectointegrador3.model.AttendeeModel;
 import dev.laurafelipe.proyectointegrador3.service.AttendeeService;
+
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
@@ -18,17 +20,23 @@ import javafx.stage.Stage;
 import javafx.util.Builder;
 
 public class AttendeeView implements Builder<Region> {
+
     private final AttendeeModel model;
     private final AttendeeService service;
+
     private FilteredList<Attendee> filteredAttendees;
 
-    public AttendeeView(AttendeeModel model, AttendeeService service) {
+    public AttendeeView(
+            AttendeeModel model,
+            AttendeeService service
+    ) {
         this.model = model;
         this.service = service;
     }
 
     @Override
     public Region build() {
+
         Node newAttendeeButton = createNewAttendeeButton();
         Node table = createAttendeesTable();
         Node searchField = createSearchField();
@@ -44,36 +52,59 @@ public class AttendeeView implements Builder<Region> {
                 searchField
         );
 
-        navigationBarHBox.setPadding(new Insets(8));
-        navigationBarHBox.setSpacing(8);
+        navigationBarHBox.setPadding(new Insets(12));
+        navigationBarHBox.setSpacing(10);
+        navigationBarHBox.getStyleClass().add("toolbar");
 
-        return new VBox(
+        VBox content = new VBox(
                 navigationBarHBox,
                 table
         );
+
+        content.setSpacing(12);
+        content.setPadding(new Insets(15));
+
+        return content;
     }
 
     private Node createSearchField() {
+
         TextField searchField = new TextField();
-        searchField.setPromptText("Buscar por nombre o documento...");
 
-        searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-            filteredAttendees.setPredicate(attendee -> {
-                if (newValue == null || newValue.isBlank()) {
-                    return true;
+        searchField.setPromptText(
+                "Buscar por nombre o documento..."
+        );
+
+        searchField.textProperty().addListener(
+                (observable, oldValue, newValue) -> {
+
+                    filteredAttendees.setPredicate(attendee -> {
+
+                        if (newValue == null || newValue.isBlank()) {
+                            return true;
+                        }
+
+                        String search = newValue.toLowerCase();
+
+                        String name = attendee.name == null
+                                ? ""
+                                : attendee.name.toLowerCase();
+
+                        String document = attendee.documentNumber == null
+                                ? ""
+                                : attendee.documentNumber.toLowerCase();
+
+                        return name.contains(search)
+                                || document.contains(search);
+                    });
                 }
-
-                String search = newValue.toLowerCase();
-
-                return attendee.name.toLowerCase().contains(search)
-                        || attendee.documentNumber.toLowerCase().contains(search);
-            });
-        });
+        );
 
         return searchField;
     }
 
     private Node createUpdateAttendeeButton() {
+
         Button button = new Button("Actualizar");
 
         button.disableProperty().bind(
@@ -81,15 +112,23 @@ public class AttendeeView implements Builder<Region> {
         );
 
         button.setOnAction(event -> {
-            Attendee selectedAttendee = model.selectedAttendee.get();
-            Stage updateAttendeeModal = createUpdateAttendeeModal(selectedAttendee);
+
+            Attendee selectedAttendee =
+                    model.selectedAttendee.get();
+
+            Stage updateAttendeeModal =
+                    createUpdateAttendeeModal(selectedAttendee);
+
             updateAttendeeModal.showAndWait();
         });
 
         return button;
     }
 
-    private Stage createUpdateAttendeeModal(Attendee attendeeToUpdate) {
+    private Stage createUpdateAttendeeModal(
+            Attendee attendeeToUpdate
+    ) {
+
         Stage modal = new Stage();
 
         modal.initModality(Modality.APPLICATION_MODAL);
@@ -100,10 +139,13 @@ public class AttendeeView implements Builder<Region> {
 
         modal.setScene(new Scene(updateAttendeeForm.build()));
 
+        StylesView.applyModal(modal.getScene());
+
         return modal;
     }
 
     private Node createDeleteAttendeeButton() {
+
         Button button = new Button("Eliminar");
 
         button.disableProperty().bind(
@@ -111,21 +153,36 @@ public class AttendeeView implements Builder<Region> {
         );
 
         button.setOnAction(event -> {
+
             try {
-                String attendeeId = model.selectedAttendee.get().attendeeId;
+
+                String attendeeId =
+                        model.selectedAttendee.get().attendeeId;
+
                 service.removeAttendeeById(attendeeId);
                 service.findAllAttendees();
 
-                Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+                Alert successAlert =
+                        new Alert(Alert.AlertType.INFORMATION);
+
                 successAlert.setTitle("Asistente eliminado");
-                successAlert.setHeaderText("Asistente eliminado exitosamente");
+                successAlert.setHeaderText(
+                        "Asistente eliminado exitosamente"
+                );
+
                 successAlert.showAndWait();
 
             } catch (Exception e) {
-                Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+
+                Alert errorAlert =
+                        new Alert(Alert.AlertType.ERROR);
+
                 errorAlert.setTitle("Error");
-                errorAlert.setHeaderText("No se pudo eliminar el asistente");
+                errorAlert.setHeaderText(
+                        "No se pudo eliminar el asistente"
+                );
                 errorAlert.setContentText(e.getMessage());
+
                 errorAlert.showAndWait();
             }
         });
@@ -134,10 +191,14 @@ public class AttendeeView implements Builder<Region> {
     }
 
     private Node createNewAttendeeButton() {
+
         Button button = new Button("Registrar asistente");
+        button.getStyleClass().add("primary-button");
 
         button.setOnAction(event -> {
+
             Stage newAttendeeModal = createNewAttendeeModal();
+
             newAttendeeModal.showAndWait();
         });
 
@@ -145,6 +206,7 @@ public class AttendeeView implements Builder<Region> {
     }
 
     private Stage createNewAttendeeModal() {
+
         Stage modal = new Stage();
 
         modal.initModality(Modality.APPLICATION_MODAL);
@@ -155,49 +217,72 @@ public class AttendeeView implements Builder<Region> {
 
         modal.setScene(new Scene(newAttendeeFormView.build()));
 
+        StylesView.applyModal(modal.getScene());
+
         return modal;
     }
 
     private Node createAttendeesTable() {
+
         TableView<Attendee> tableView = new TableView<>();
 
         model.selectedAttendee.bind(
                 tableView.getSelectionModel().selectedItemProperty()
         );
 
-        TableColumn<Attendee, String> idColumn = new TableColumn<>("ID");
+        TableColumn<Attendee, String> idColumn =
+                new TableColumn<>("ID");
+
         idColumn.setCellValueFactory(
-                p -> new ReadOnlyStringWrapper(p.getValue().attendeeId)
+                p -> new ReadOnlyStringWrapper(
+                        p.getValue().attendeeId
+                )
         );
+
         tableView.getColumns().add(idColumn);
 
-        TableColumn<Attendee, String> nameColumn = new TableColumn<>("Nombre");
+        TableColumn<Attendee, String> nameColumn =
+                new TableColumn<>("Nombre");
+
         nameColumn.setCellValueFactory(
-                p -> new ReadOnlyStringWrapper(p.getValue().name)
+                p -> new ReadOnlyStringWrapper(
+                        p.getValue().name
+                )
         );
+
         tableView.getColumns().add(nameColumn);
 
         TableColumn<Attendee, String> documentColumn =
                 new TableColumn<>("Numero de documento");
+
         documentColumn.setCellValueFactory(
-                p -> new ReadOnlyStringWrapper(p.getValue().documentNumber)
+                p -> new ReadOnlyStringWrapper(
+                        p.getValue().documentNumber
+                )
         );
+
         tableView.getColumns().add(documentColumn);
 
         TableColumn<Attendee, String> emailColumn =
                 new TableColumn<>("Correo electronico");
+
         emailColumn.setCellValueFactory(
-                p -> new ReadOnlyStringWrapper(p.getValue().email)
+                p -> new ReadOnlyStringWrapper(
+                        p.getValue().email
+                )
         );
+
         tableView.getColumns().add(emailColumn);
 
-        filteredAttendees = new FilteredList<>(model.attendees, attendee -> true);
+        filteredAttendees =
+                new FilteredList<>(model.attendees, attendee -> true);
+
         tableView.setItems(filteredAttendees);
+
         tableView.setColumnResizePolicy(
                 TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS
         );
 
         return tableView;
     }
-
 }

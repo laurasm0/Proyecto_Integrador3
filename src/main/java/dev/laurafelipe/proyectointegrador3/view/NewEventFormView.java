@@ -11,14 +11,7 @@ import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.DatePicker;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
-import javafx.scene.control.TextFormatter;
+import javafx.scene.control.*;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.util.Builder;
@@ -106,12 +99,32 @@ public class NewEventFormView implements Builder<Region> {
         return categoryField;
     }
 
+
     private Node createDateField() {
         DatePicker dateField = new DatePicker();
+
+        // No permite escribir fechas manualmente
         dateField.setEditable(false);
+
+        // Deshabilita las fechas anteriores al dia actual
+        dateField.setDayCellFactory(picker -> new DateCell() {
+            @Override
+            public void updateItem(LocalDate item, boolean empty) {
+                super.updateItem(item, empty);
+
+                if (empty || item == null) {
+                    setDisable(true);
+                } else {
+                    setDisable(item.isBefore(LocalDate.now()));
+                }
+            }
+        });
+
         dateField.valueProperty().bindBidirectional(date);
+
         return dateField;
     }
+
 
     private Node createTimeField(StringProperty timeProperty) {
         TextField timeField = new TextField();
